@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "chrono": "cpp",
+        "string_view": "cpp",
+        "*.tcc": "cpp"
+    }
+}
