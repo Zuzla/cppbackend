@@ -20,6 +20,12 @@ namespace http_handler
     {
         const model::Map *data_map = nullptr;
 
+        if (id_map == "maps" || id_map == "")
+        {
+            GetAllMapsJson(res);
+            return true;
+        }
+
         data_map = game_.FindMap(util::Tagged<std::string, model::Map>(id_map));
 
         if (data_map == nullptr)
@@ -136,18 +142,11 @@ namespace http_handler
 
         std::string body;
 
-        auto url = (std::string)req.target().data();            
-        if (std::strstr(url.c_str(), "/api/v1/maps/"))
+        auto url = (std::string)req.target().data();
+
+        if (std::strstr(url.c_str(), "/api/v1/maps"))
         {
             if (GetMapJson(url.substr(url.find_last_of('/') + 1, url.size()), &body) == false)
-                return MakeStringResponse(http::status::not_found, body, req.version(), req.keep_alive());
-
-            return MakeStringResponse(http::status::ok, body, req.version(), req.keep_alive());
-        }
-        
-        if (url == "/api/v1/maps")
-        {
-            if (GetAllMapsJson(&body) == false)
                 return MakeStringResponse(http::status::not_found, body, req.version(), req.keep_alive());
 
             return MakeStringResponse(http::status::ok, body, req.version(), req.keep_alive());
