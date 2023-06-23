@@ -18,12 +18,12 @@ namespace {
 
 // Запускает функцию fn на n потоках, включая текущий
 template <typename Fn>
-void RunWorkers(unsigned n, const Fn& fn) {
-    n = std::max(1u, n);
+void RunWorkers(unsigned thread, const Fn& fn) {
+    thread = std::max(1u, thread);
     std::vector<std::jthread> workers;
-    workers.reserve(n - 1);
+    workers.reserve(thread - 1);
     // Запускаем n-1 рабочих потоков, выполняющих функцию fn
-    while (--n) {
+    while (--thread) {
         workers.emplace_back(fn);
     }
     fn();
@@ -78,4 +78,6 @@ int main(int argc, const char* argv[]) {
         std::cerr << ex.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
