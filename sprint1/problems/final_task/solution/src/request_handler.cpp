@@ -2,7 +2,7 @@
 
 namespace http_handler 
 {
-    std::string RequestHandler::ErrorJson(std::string code, std::string msg)
+    std::string RequestHandler::Error(std::string code, std::string msg)
     {
         code.erase(std::remove_if(code.begin(), code.end(), ::isspace), code.end());
         code[0] = tolower(code[0]);
@@ -16,7 +16,7 @@ namespace http_handler
         return json::serialize(error);
     }
 
-    boost::json::array RoadsObject(const model::Map *data_map)
+    boost::json::array RequestHandler::RoadsObject(const model::Map *data_map)
     {
         auto roads = data_map->GetRoads();
         boost::json::array roads_odj{roads.size()};
@@ -38,7 +38,7 @@ namespace http_handler
         return roads_odj;
     }
 
-    boost::json::array BuildingsObject(const model::Map *data_map)
+    boost::json::array RequestHandler::BuildingsObject(const model::Map *data_map)
     {
         auto buildings = data_map->GetBuildings();
         boost::json::array building_odj{buildings.size()};
@@ -61,7 +61,7 @@ namespace http_handler
         return building_odj;
     }
 
-    boost::json::array OfficesObject(const model::Map *data_map)
+    boost::json::array RequestHandler::OfficesObject(const model::Map *data_map)
     {
         auto offices = data_map->GetOffices();
         boost::json::array offices_odj{offices.size()};
@@ -82,21 +82,20 @@ namespace http_handler
         return offices_odj; 
     }
 
-    bool RequestHandler::GetMapJson(const std::string id_map, std::string* res)
+    bool RequestHandler::GetMap(const std::string id_map, std::string&& res)
     {
         const model::Map *data_map = nullptr;
 
         if (id_map == "maps" || id_map == "")
         {
-            GetAllMapsJson(res);
-            return true;
+            return GetAllMaps(std::move(res));
         }
 
         data_map = game_.FindMap(util::Tagged<std::string, model::Map>(id_map));
 
         if (data_map == nullptr)
         {
-            *res = ErrorJson("Map Not Found", "Map not found");
+            res = Error("Map Not Found", "Map not found");
             return false;
         }        
         
@@ -115,11 +114,11 @@ namespace http_handler
         // add offices        
         obj["offices"] = OfficesObject(data_map);
 
-        *res = json::serialize(obj);
+        res = json::serialize(obj);
         return true;
     };
 
-    bool RequestHandler::GetAllMapsJson(std::string* res)
+    bool RequestHandler::GetAllMaps(std::string&& res) const
     {
         auto all_maps = game_.GetMaps();
 
@@ -135,7 +134,7 @@ namespace http_handler
             maps_array.push_back(map_obj);
         }
         
-        *res = json::serialize(maps_array);
+        res = json::serialize(maps_array);
         return true;
     }
 
@@ -163,13 +162,13 @@ namespace http_handler
 
         if (std::strstr(url.c_str(), "/api/v1/maps"))
         {
-            if (GetMapJson(url.substr(url.find_last_of('/') + 1, url.size()), &body) == false)
+            if (GetMap(url.substr(url.find_last_of('/') + 1, url.size()), std::move(body)) == false)
                 return MakeStringResponse(http::status::not_found, body, req.version(), req.keep_alive());
 
             return MakeStringResponse(http::status::ok, body, req.version(), req.keep_alive());
         }
 
-        body = ErrorJson("Bad Request", "Bad request");
+        body = Error("Bad Request", "Bad request");
         return MakeStringResponse(http::status::bad_request, body, req.version(), req.keep_alive());
     }
 
