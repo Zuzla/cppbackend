@@ -29,11 +29,11 @@ namespace http_handler
 
         struct ContentType {
             ContentType() = delete;
-            constexpr static std::string_view TEXT_HTML = "application/json";
+            constexpr static std::string_view TEXT_JSON = "application/json";
         };
 
         // возвращает Json с ошибкой
-        std::string Error(std::string code, std::string msg);
+        std::string Error(std::string code, const std::string& msg);
         boost::json::array OfficesObject(const model::Map *data_map);
         boost::json::array BuildingsObject(const model::Map *data_map);
         boost::json::array RoadsObject(const model::Map *data_map);
@@ -42,7 +42,7 @@ namespace http_handler
         // в res передает id и name для всех карт в виде Json
         bool GetAllMaps(std::string&& res) const; 
         // Создаёт StringResponse с заданными параметрами
-        StringResponse MakeStringResponse(http::status status, std::string_view body, unsigned http_version, bool keep_alive, std::string_view content_type = ContentType::TEXT_HTML);
+        StringResponse MakeStringResponse(http::status status, std::string_view body, unsigned http_version, bool keep_alive, std::string_view content_type = ContentType::TEXT_JSON);
         // обрабатывает запрос
         StringResponse HandleRequest(StringRequest&& req);
 

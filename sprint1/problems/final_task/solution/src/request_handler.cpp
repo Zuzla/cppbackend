@@ -2,7 +2,7 @@
 
 namespace http_handler 
 {
-    std::string RequestHandler::Error(std::string code, std::string msg)
+    std::string RequestHandler::Error(std::string code, const std::string& msg)
     {
         code.erase(std::remove_if(code.begin(), code.end(), ::isspace), code.end());
         code[0] = tolower(code[0]);
@@ -19,7 +19,9 @@ namespace http_handler
     boost::json::array RequestHandler::RoadsObject(const model::Map *data_map)
     {
         auto roads = data_map->GetRoads();
-        boost::json::array roads_odj{roads.size()};
+        boost::json::array roads_odj;
+        roads_odj.reserve(roads.size());
+
         for (int i = 0; i < roads.size(); i++)
         {
             boost::json::object road = 
@@ -41,7 +43,9 @@ namespace http_handler
     boost::json::array RequestHandler::BuildingsObject(const model::Map *data_map)
     {
         auto buildings = data_map->GetBuildings();
-        boost::json::array building_odj{buildings.size()};
+        boost::json::array building_odj;
+        building_odj.reserve(buildings.size());
+
         for (int i = 0; i < buildings.size(); i++)
         {
             auto position = buildings.at(i).GetBounds().position;
@@ -64,7 +68,9 @@ namespace http_handler
     boost::json::array RequestHandler::OfficesObject(const model::Map *data_map)
     {
         auto offices = data_map->GetOffices();
-        boost::json::array offices_odj{offices.size()};
+        boost::json::array offices_odj;
+        offices_odj.reserve(offices.size());
+
         for (int i = 0; i < offices.size(); i++)
         {
             boost::json::object office = 
@@ -85,11 +91,6 @@ namespace http_handler
     bool RequestHandler::GetMap(const std::string id_map, std::string&& res)
     {
         const model::Map *data_map = nullptr;
-
-        if (id_map == "maps" || id_map == "")
-        {
-            return GetAllMaps(std::move(res));
-        }
 
         data_map = game_.FindMap(util::Tagged<std::string, model::Map>(id_map));
 
@@ -122,7 +123,9 @@ namespace http_handler
     {
         auto all_maps = game_.GetMaps();
 
-        boost::json::array maps_array{all_maps.size()};
+        boost::json::array maps_array;
+        maps_array.reserve(all_maps.size());
+        
         for (const auto &map : all_maps)
         {
             boost::json::object map_obj = 
@@ -158,14 +161,25 @@ namespace http_handler
 
         std::string body;
 
-        auto url = (std::string)req.target().data();
+        std::string url = req.target().data();
 
         if (std::strstr(url.c_str(), "/api/v1/maps"))
         {
-            if (GetMap(url.substr(url.find_last_of('/') + 1, url.size()), std::move(body)) == false)
-                return MakeStringResponse(http::status::not_found, body, req.version(), req.keep_alive());
+            std::string target_file = url.substr(url.find_last_of('/') + 1, url.size()).data();
 
-            return MakeStringResponse(http::status::ok, body, req.version(), req.keep_alive());
+            if (target_file == "maps" || target_file == "")
+            {
+                GetAllMaps(std::move(body));
+            }
+            else 
+            {
+                if (GetMap(target_file, std::move(body)) == false)
+                {
+                    return (MakeStringResponse(http::status::not_found, body, req.version(), req.keep_alive(), ContentType::TEXT_JSON));
+                }
+            }
+
+            return (MakeStringResponse(http::status::ok, body, req.version(), req.keep_alive(), ContentType::TEXT_JSON));
         }
 
         body = Error("Bad Request", "Bad request");
