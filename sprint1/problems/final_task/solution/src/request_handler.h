@@ -34,13 +34,13 @@ namespace http_handler
 
         // возвращает Json с ошибкой
         std::string Error(std::string code, const std::string& msg);
-        boost::json::array OfficesObject(const model::Map *data_map);
-        boost::json::array BuildingsObject(const model::Map *data_map);
-        boost::json::array RoadsObject(const model::Map *data_map);
+        boost::json::array OfficesObject(const model::Map& data_map);
+        boost::json::array BuildingsObject(const model::Map& data_map);
+        boost::json::array RoadsObject(const model::Map& data_map);
         // в res передает Json с данными о карте по id_map
         bool GetMap(const std::string id_map, std::string&& res);
         // в res передает id и name для всех карт в виде Json
-        bool GetAllMaps(std::string&& res) const; 
+        void GetAllMaps(std::string&& res) const; 
         // Создаёт StringResponse с заданными параметрами
         StringResponse MakeStringResponse(http::status status, std::string_view body, unsigned http_version, bool keep_alive, std::string_view content_type = ContentType::TEXT_JSON);
         // обрабатывает запрос

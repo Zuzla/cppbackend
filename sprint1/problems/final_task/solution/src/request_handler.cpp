@@ -16,42 +16,42 @@ namespace http_handler
         return json::serialize(error);
     }
 
-    boost::json::array RequestHandler::RoadsObject(const model::Map *data_map)
+    boost::json::array RequestHandler::RoadsObject(const model::Map& data_map)
     {
-        auto roads = data_map->GetRoads();
-        boost::json::array roads_odj;
-        roads_odj.reserve(roads.size());
+        auto roads = data_map.GetRoads();
+        boost::json::array roads_odj{roads.size()};
+        //roads_odj.reserve(roads.size());
 
-        for (int i = 0; i < roads.size(); i++)
+        for (const auto& road : roads)
         {
-            boost::json::object road = 
+            boost::json::object road_obj = 
             {
-                {"x0", roads.at(i).GetStart().x},
-                {"y0", roads.at(i).GetStart().y},
+                {"x0", road.GetStart().x},
+                {"y0", road.GetStart().y},
             };
 
-            if (roads.at(i).IsHorizontal())
-                road.emplace("x1", roads.at(i).GetEnd().x);
+            if (road.IsHorizontal())
+                road_obj.emplace("x1", road.GetEnd().x);
             else
-                road.emplace("y1", roads.at(i).GetEnd().y);
+                road_obj.emplace("y1", road.GetEnd().y);
 
-            roads_odj.push_back(road);
+            roads_odj.push_back(road_obj);
         };
         return roads_odj;
     }
 
-    boost::json::array RequestHandler::BuildingsObject(const model::Map *data_map)
+    boost::json::array RequestHandler::BuildingsObject(const model::Map& data_map)
     {
-        auto buildings = data_map->GetBuildings();
-        boost::json::array building_odj;
-        building_odj.reserve(buildings.size());
+        auto buildings = data_map.GetBuildings();
+        boost::json::array building_odj{buildings.size()};
+        //building_odj.reserve(buildings.size());
 
-        for (int i = 0; i < buildings.size(); i++)
+        for (const auto& building : buildings)
         {
-            auto position = buildings.at(i).GetBounds().position;
-            auto size = buildings.at(i).GetBounds().size;
+            auto position = building.GetBounds().position;
+            auto size = building.GetBounds().size;
 
-            boost::json::object building = 
+            boost::json::object obj = 
             {
                 {"x", position.x},
                 {"y", position.y},
@@ -59,30 +59,30 @@ namespace http_handler
                 {"h", size.height}
             };
 
-            building_odj.push_back(building);
+            building_odj.push_back(obj);
         };
 
         return building_odj;
     }
 
-    boost::json::array RequestHandler::OfficesObject(const model::Map *data_map)
+    boost::json::array RequestHandler::OfficesObject(const model::Map& data_map)
     {
-        auto offices = data_map->GetOffices();
-        boost::json::array offices_odj;
-        offices_odj.reserve(offices.size());
+        auto offices = data_map.GetOffices();
+        boost::json::array offices_odj{offices.size()};
+        //offices_odj.reserve(offices.size());
 
-        for (int i = 0; i < offices.size(); i++)
+        for (const auto& office : offices)
         {
-            boost::json::object office = 
+            boost::json::object obj = 
             {
-                {"id", *offices.at(i).GetId()},
-                {"x", offices.at(i).GetPosition().x},
-                {"y", offices.at(i).GetPosition().y},
-                {"offsetX", offices.at(i).GetOffset().dx},
-                {"offsetY", offices.at(i).GetOffset().dy}
+                {"id", *office.GetId()},
+                {"x", office.GetPosition().x},
+                {"y", office.GetPosition().y},
+                {"offsetX", office.GetOffset().dx},
+                {"offsetY", office.GetOffset().dy}
             };
 
-            offices_odj.push_back(office);
+            offices_odj.push_back(obj);
         };
 
         return offices_odj; 
@@ -107,19 +107,19 @@ namespace http_handler
         obj["name"] = data_map->GetName();
 
         // add roads        
-        obj["roads"] = RoadsObject(data_map);
+        obj["roads"] = RoadsObject(*data_map);
         
         // add buildings        
-        obj["buildings"] = BuildingsObject(data_map);
+        obj["buildings"] = BuildingsObject(*data_map);
 
         // add offices        
-        obj["offices"] = OfficesObject(data_map);
+        obj["offices"] = OfficesObject(*data_map);
 
         res = json::serialize(obj);
         return true;
     };
 
-    bool RequestHandler::GetAllMaps(std::string&& res) const
+    void RequestHandler::GetAllMaps(std::string&& res) const
     {
         auto all_maps = game_.GetMaps();
 
@@ -138,7 +138,6 @@ namespace http_handler
         }
         
         res = json::serialize(maps_array);
-        return true;
     }
 
     RequestHandler::StringResponse RequestHandler::MakeStringResponse(http::status status, std::string_view body, unsigned http_version, bool keep_alive, 
@@ -167,7 +166,7 @@ namespace http_handler
         {
             std::string target_file = url.substr(url.find_last_of('/') + 1, url.size()).data();
 
-            if (target_file == "maps" || target_file == "")
+            if (target_file == "maps" || target_file.empty())
             {
                 GetAllMaps(std::move(body));
             }
