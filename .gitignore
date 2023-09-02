@@ -729,3 +729,4 @@ cpp-backend-tests-practicum
 .venv
 # XML Results
 *.xml
+.vscode
