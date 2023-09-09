@@ -126,7 +126,7 @@ namespace server_logging
             boost::json::value custom_data
             {
                 {"response_time"s, time}, 
-                {"code"s, (uint32_t)r.base().result()}, 
+                {"code"s, static_cast<uint32_t>(r.base().result())}, 
                 {"content_type"s, content_type}
             };
             BOOST_LOG_TRIVIAL(info) << logging::add_value(additional_data, custom_data) << "response sent"sv;   
@@ -161,7 +161,7 @@ namespace server_logging
             boost::json::value custom_data
             {
                 {"response_time"s, time}, 
-                {"code"s, (uint32_t)r.base().result()}, 
+                {"code"s, static_cast<uint32_t>(r.base().result())}, 
                 {"content_type"s, content_type}
             };
             BOOST_LOG_TRIVIAL(info) << logging::add_value(additional_data, custom_data) << "response sent"sv;            

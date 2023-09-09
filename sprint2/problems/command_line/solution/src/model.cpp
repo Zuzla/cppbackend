@@ -44,11 +44,11 @@ namespace model
         {
             if (x > end)
             {
-                position_.x = end + 0.4;
+                position_.x = end + kRoadWidth;
             }
             else
             {
-                position_.x = start - 0.4;
+                position_.x = start - kRoadWidth;
             }
 
             speed_.x = 0;
@@ -72,11 +72,11 @@ namespace model
         {
             if (y > end)
             {
-                position_.y = end + 0.4;
+                position_.y = end + kRoadWidth;
             }
             else
             {
-                position_.y = start - 0.4;
+                position_.y = start - kRoadWidth;
             }
 
             speed_.x = 0;
@@ -89,7 +89,7 @@ namespace model
         if (time.count() == 0)
             return;
 
-        double time_diff_ = time.count() / 1000.0;
+        double time_diff_ = time.count() / kMillisecondsToSeconds;
 
         double x = position_.x + speed_.x * time_diff_;
         double y = position_.y + speed_.y * time_diff_;
@@ -118,7 +118,7 @@ namespace model
         for (const auto &road : vec_road)
         {
             bool p1 = road.IsHorizontal();
-            bool p2 = direction_ == "L" || direction_ == "R";
+            bool p2 = direction_ == kLeftDirection || direction_ == kRightDirection;
 
             if (p1 && p2)
             {
@@ -127,7 +127,7 @@ namespace model
             }
 
             p1 = road.IsVertical();
-            p2 = direction_ == "U" || direction_ == "D";
+            p2 = direction_ == kUpDirection || direction_ == kDownDirection;
 
             if (p1 && p2)
             {
@@ -136,12 +136,12 @@ namespace model
             }
         }
 
-        if (direction_ == "L"s)
+        if (direction_ == kLeftDirection)
         {
 
-            if (x < (int64_t)std::round(position_.x) - 0.4)
+            if (x < static_cast<int64_t>(std::round(position_.x) - kRoadWidth))
             {
-                position_.x = std::round(position_.x) - 0.4;
+                position_.x = std::round(position_.x) - kRoadWidth;
                 speed_.x = 0;
                 speed_.y = 0;
             }
@@ -150,11 +150,11 @@ namespace model
                 position_.x = x;
             }
         }
-        else if (direction_ == "R"s)
+        else if (direction_ == kRightDirection)
         {
-            if (x > (int64_t)std::round(position_.x) + 0.4)
+            if (x > static_cast<int64_t>(std::round(position_.x) + kRoadWidth))
             {
-                position_.x = std::round(position_.x) + 0.4;
+                position_.x = std::round(position_.x) + kRoadWidth;
                 speed_.x = 0;
                 speed_.y = 0;
             }
@@ -163,11 +163,11 @@ namespace model
                 position_.x = x;
             }
         }
-        else if (direction_ == "U"s)
+        else if (direction_ == kUpDirection)
         {
-            if (y < (int64_t)std::round(position_.y) - 0.4)
+            if (y < static_cast<int64_t>(std::round(position_.y) - kRoadWidth))
             {
-                position_.y = std::round(position_.y) - 0.4;
+                position_.y = std::round(position_.y) - kRoadWidth;
                 speed_.x = 0;
                 speed_.y = 0;
             }
@@ -176,11 +176,11 @@ namespace model
                 position_.y = y;
             }
         }
-        else if (direction_ == "D"s)
+        else if (direction_ == kDownDirection)
         {
-            if (y > (int64_t)std::round(position_.y) + 0.4)
+            if (y > static_cast<int64_t>(std::round(position_.y) + kRoadWidth))
             {
-                position_.y = std::round(position_.y) + 0.4;
+                position_.y = std::round(position_.y) + kRoadWidth;
                 speed_.x = 0;
                 speed_.y = 0;
             }
@@ -197,19 +197,19 @@ namespace model
 
         int32_t current_speed_ = map_->GetDogSpeed();
 
-        if (direction_ == "L")
+        if (direction_ == kLeftDirection)
         {
             SetSpeed(-current_speed_, 0);
         }
-        else if (direction_ == "R")
+        else if (direction_ == kRightDirection)
         {
             SetSpeed(current_speed_, 0);
         }
-        else if (direction_ == "U")
+        else if (direction_ == kUpDirection)
         {
             SetSpeed(0, -current_speed_);
         }
-        else if (direction_ == "D")
+        else if (direction_ == kDownDirection)
         {
             SetSpeed(0, current_speed_);
         }
@@ -299,6 +299,7 @@ namespace model
         const size_t index = dogs_.size();
         if (auto [it, inserted] = dog_id_to_index_.emplace(dog.GetId(), index); !inserted)
         {
+            delete &dog;
             throw std::invalid_argument("Dog with id "s + *dog.GetId() + " already exists"s);
         }
         else
@@ -382,45 +383,30 @@ namespace model
         GameSession *game_session_ = nullptr;
         Dog *dog_ = nullptr;
 
-        try
+        if (game_sessions_.size() == 0)
         {
-            if (game_sessions_.size() == 0)
-            {
-                CreateNewSession(map_id);
-            }
-
-            game_session_ = FindGameSession(util::Tagged<std::string, GameSession>(map_id));
-
-            if (game_session_ == nullptr)
-            {
-                game_session_ = CreateNewSession(map_id);
-            }
-
-            dog_ = new Dog(util::Tagged<std::string, Dog>(user_name), std::make_shared<Map>(game_session_->GetMap()));
-
-            // TO DO. Remake
-            game_session_->AddDog(std::move(*dog_), IsDefaultSpawn());
-
-            return game_session_;
+            CreateNewSession(map_id);
         }
-        catch (...)
+
+        game_session_ = FindGameSession(util::Tagged<std::string, GameSession>(map_id));
+
+        if (game_session_ == nullptr)
         {
-            if (game_session_ == nullptr)
-                return nullptr;
-
-            if (dog_ == nullptr)
-                return nullptr;
-
-            DisconnectSession(game_session_, dog_);
-
-            return nullptr;
+            game_session_ = CreateNewSession(map_id);
         }
+
+        dog_ = std::make_shared<Dog>(util::Tagged<std::string, Dog>(user_name), std::make_shared<Map>(game_session_->GetMap())).get();
+
+        // TO DO. Remake
+        game_session_->AddDog(std::move(*dog_), IsDefaultSpawn());
+
+        return game_session_;
     }
 
     GameSession *Game::CreateNewSession(const std::string &map_id)
     {
         const Map *data_map = FindMap(util::Tagged<std::string, Map>(map_id));
-        GameSession *game_session = new model::GameSession(util::Tagged<std::string, GameSession>(map_id), std::move(*data_map));
+        GameSession *game_session = std::make_shared<model::GameSession>(util::Tagged<std::string, GameSession>(map_id), std::move(*data_map)).get();
         AddGameSession(std::move(*game_session));
 
         return game_session;

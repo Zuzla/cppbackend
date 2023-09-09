@@ -52,11 +52,11 @@ namespace model
 
     class Road {
         struct HorizontalTag {
-            explicit HorizontalTag() = default;
+            HorizontalTag() = default;
         };
 
         struct VerticalTag {
-            explicit VerticalTag() = default;
+            VerticalTag() = default;
         };
 
     public:
@@ -239,6 +239,14 @@ namespace model
         Position position_;        
         std::shared_ptr<Map> map_;        
         std::string direction_;
+
+        const int32_t kMillisecondsToSeconds = 1000;
+        const int32_t kRoadWidth = 0.4;
+
+        const std::string kLeftDirection = "L";
+        const std::string kRightDirection = "R";
+        const std::string kDownDirection = "D";
+        const std::string kUpDirection = "U";
 
         void SetSpeed(const int32_t& x, const int32_t& y);
     };

@@ -276,7 +276,7 @@ namespace http_handler
 
         dog_->SetDirection(direction);
 
-        json::object obj= {};
+        json::object obj = {};
 
         return MakeStringResponse(http::status::ok, json::serialize(obj), req.version(), req.keep_alive(), ContentType::TEXT_JSON, "no-cache"sv);
     }
@@ -411,7 +411,7 @@ namespace http_handler
 
         json::array obj{all_dogs_.size()};
 
-        for (const auto& dog : all_dogs_)
+        for (const auto &dog : all_dogs_)
         {
             json::object name;
             name["name"] = *dog.GetId();

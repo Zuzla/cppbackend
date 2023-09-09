@@ -6,6 +6,10 @@
 #include <map>
 #include <memory>
 
+/*
+    Пустая структура, чтобы сделать тег для токена.
+    Класс Tagged принимат 2 параметра.
+*/
 namespace detail
 {
     struct TokenTag
