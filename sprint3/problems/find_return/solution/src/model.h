@@ -375,7 +375,7 @@ namespace model
     public:
         using Id = util::Tagged<std::string, GameSession>;
         using DogId = util::Tagged<std::string, Dog>;
-        using Dogs = std::vector<Dog>;
+        using Dogs = std::vector<std::shared_ptr<Dog>>;
 
         GameSession(Id id, const Map &&map) noexcept
             : id_(std::move(id)), map_(std::move(map))
@@ -397,16 +397,16 @@ namespace model
             return map_;
         }
 
-        void AddDog(Dog &&dog, const bool default_spawn);
+        void AddDog(std::shared_ptr<Dog> &dog, const bool default_spawn);
 
         void DeleteDog(const Dog::Id &id)
         {
             return;
         }
 
-        Dog *FindDog(const Dog::Id &id) const noexcept;
+        std::shared_ptr<Dog> FindDog(const Dog::Id &id) const noexcept;
 
-        Dog *FindDogByHash(const size_t &hash);
+        std::shared_ptr<Dog> FindDogByHash(const size_t &hash);
 
         void Tick(std::chrono::milliseconds time);
 
@@ -422,14 +422,14 @@ namespace model
         using DogIdHasher = util::TaggedHasher<Dog::Id>;
         using DogIdToIndex = std::unordered_map<Dog::Id, size_t, DogIdHasher>;
 
-        std::vector<Dog> dogs_;
+        std::vector<std::shared_ptr<Dog>> dogs_;
         DogIdToIndex dog_id_to_index_;
 
         const Id id_;
         Map map_;
 
         const int32_t GenerateNum(int32_t start, int32_t end);
-        void SetPositionDog(Dog &&dog, const bool default_spawn);
+        void SetPositionDog(std::shared_ptr<Dog> &dog, const bool default_spawn);
 
         uint32_t num_loot_ = 0;
     };
@@ -438,7 +438,7 @@ namespace model
     {
     public:
         using Maps = std::vector<Map>;
-        using Session = std::vector<GameSession>;
+        using Session = std::vector<std::shared_ptr<GameSession>>;
 
         Game(bool is_debug, bool default_spawn) : is_debug_(is_debug), default_spawn_(default_spawn)
         {
@@ -450,16 +450,16 @@ namespace model
         Game operator=(Game &&) = delete;
 
         void AddMap(Map &&map);
-        void AddGameSession(GameSession &&game_session_);
+        void AddGameSession(std::shared_ptr<model::GameSession> &game_session_);
 
         const Map *FindMap(const Map::Id &id) const noexcept;
 
         void Tick(std::chrono::milliseconds time, add_data::GameLoots &game_loots);
         void DisconnectSession(GameSession *game_session_, Dog *dog_);
 
-        GameSession *FindGameSession(const GameSession::Id &id) const noexcept;
-        GameSession *ConnectToSession(const std::string &map_id, const std::string &user_name);
-        GameSession *CreateNewSession(const std::string &map_id);
+        std::shared_ptr<GameSession> FindGameSession(const GameSession::Id &id) noexcept;
+        std::shared_ptr<GameSession> ConnectToSession(const std::string &map_id, const std::string &user_name);
+        std::shared_ptr<GameSession> CreateNewSession(const std::string &map_id);
 
         const Maps &GetMaps() const noexcept
         {

@@ -1,10 +1,12 @@
 #include "responce_api.h"
 #include "request_handler.h"
 #include "player.h"
+#include "constants.h"
 
 namespace http_handler
 {
     using namespace std::literals;
+    using namespace constant;
 
     std::string ResponseApi::Error(std::string code, std::string msg)
     {
@@ -13,8 +15,8 @@ namespace http_handler
 
         boost::json::object error =
             {
-                {"code", code},
-                {"message", msg}};
+                {kCode, code},
+                {kMessage, msg}};
 
         return json::serialize(error);
     }
@@ -46,14 +48,14 @@ namespace http_handler
         {
             boost::json::object road_obj =
                 {
-                    {"x0", road.GetStart().x},
-                    {"y0", road.GetStart().y},
+                    {kPosition_X0, road.GetStart().x},
+                    {kPosition_Y0, road.GetStart().y},
                 };
 
             if (road.IsHorizontal())
-                road_obj.emplace("x1", road.GetEnd().x);
+                road_obj.emplace(kPosition_X1, road.GetEnd().x);
             else
-                road_obj.emplace("y1", road.GetEnd().y);
+                road_obj.emplace(kPosition_Y1, road.GetEnd().y);
 
             roads_odj.push_back(road_obj);
         };
@@ -73,10 +75,10 @@ namespace http_handler
 
             boost::json::object obj =
                 {
-                    {"x", position.x},
-                    {"y", position.y},
-                    {"w", size.width},
-                    {"h", size.height}};
+                    {kXPosition, position.x},
+                    {kYPosition, position.y},
+                    {kWidth, size.width},
+                    {kHeight, size.height}};
 
             building_odj.push_back(obj);
         };
@@ -94,11 +96,11 @@ namespace http_handler
         {
             boost::json::object obj =
                 {
-                    {"id", *office.GetId()},
-                    {"x", office.GetPosition().x},
-                    {"y", office.GetPosition().y},
-                    {"offsetX", office.GetOffset().dx},
-                    {"offsetY", office.GetOffset().dy}};
+                    {kId, *office.GetId()},
+                    {kXPosition, office.GetPosition().x},
+                    {kYPosition, office.GetPosition().y},
+                    {kOffsetX, office.GetOffset().dx},
+                    {kOffsetY, office.GetOffset().dy}};
 
             offices_odj.push_back(obj);
         };
@@ -116,18 +118,18 @@ namespace http_handler
         {
             boost::json::object loot_obj;
 
-            loot_obj.emplace("name", loot.name_);
-            loot_obj.emplace("file", loot.file_);
-            loot_obj.emplace("type", loot.type_);
+            loot_obj.emplace(kName, loot.name_);
+            loot_obj.emplace(kFile, loot.file_);
+            loot_obj.emplace(kType, loot.type_);
 
             if (loot.rotation_ != -1)
-                loot_obj.emplace("rotation", loot.rotation_);
+                loot_obj.emplace(kRotation, loot.rotation_);
 
             if (!loot.color_.empty())
-                loot_obj.emplace("color", loot.color_);
+                loot_obj.emplace(kColor, loot.color_);
 
-            loot_obj.emplace("scale", loot.scale_);
-            loot_obj.emplace("value", loot.value_);
+            loot_obj.emplace(kScale, loot.scale_);
+            loot_obj.emplace(kValue, loot.value_);
 
             loots_odj.push_back(loot_obj);
         };
@@ -192,8 +194,8 @@ namespace http_handler
         {
             boost::json::object map_obj =
                 {
-                    {"id", *map.GetId()},
-                    {"name", map.GetName()},
+                    {kId, *map.GetId()},
+                    {kName, map.GetName()},
                 };
 
             maps_array.push_back(map_obj);
@@ -351,8 +353,8 @@ namespace http_handler
                 {
                     json::object obj_item = 
                     {
-                        {"id", item.id_},
-                        {"type", item.type_}
+                        {kId, item.id_},
+                        {kType, item.type_}
                     };
                     obj_bag_.push_back(obj_item);
                 }
@@ -368,18 +370,19 @@ namespace http_handler
 
                 json::object obj =
                     {
-                        {"pos", dog_position_},
-                        {"speed", dog_speed_},
-                        {"dir", dog_->GetDirection()},
-                        {"bag", obj_bag_},
-                        {"score", dog_->GetScore()},           
+                        {kPos, dog_position_},
+                        {kSpeed, dog_speed_},
+                        {kDir, dog_->GetDirection()},
+                        {kBag, obj_bag_},
+                        {kScore, dog_->GetScore()},           
                     };
 
                 players_array_.emplace(std::to_string(current_player.second->GetId()), obj);
             }
 
             // TO DO! Сессия должна быть одна                         Возможна ошибка `.at(0)`! Аккуратно!
-            auto all_loots_ = game_.GetGameSessions().at(0).GetMap().GetLoots();
+            auto game_session = game_.GetGameSessions().at(0);
+            auto all_loots_ = game_session->GetMap().GetLoots();
 
             json::object loots_array_;
             loots_array_.reserve(all_loots_.size());
@@ -392,8 +395,8 @@ namespace http_handler
 
                 json::object obj =
                     {
-                        {"type", loot.type_},
-                        {"pos", pos},
+                        {kType, loot.type_},
+                        {kPos, pos},
                     };
 
                 loots_array_.emplace(std::to_string(loot.id_), obj);
@@ -401,8 +404,8 @@ namespace http_handler
 
             json::object players_obj_ =
                 {
-                    {"players", players_array_},
-                    {"lostObjects", loots_array_},
+                    {kPlayers, players_array_},
+                    {kLostObjects, loots_array_},
                 };
 
             return MakeStringResponse(http::status::ok, json::serialize(players_obj_), req.version(), req.keep_alive(), ContentType::TEXT_JSON, "no-cache"sv);
@@ -485,7 +488,7 @@ namespace http_handler
         for (const auto &dog : all_dogs_)
         {
             json::object name;
-            name["name"] = *dog.GetId();
+            name["name"] = *dog->GetId();
 
             obj.push_back(name);
         }

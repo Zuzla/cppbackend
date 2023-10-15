@@ -300,12 +300,12 @@ namespace model
         }
     }
 
-    void Game::AddGameSession(GameSession &&game_session)
+    void Game::AddGameSession(std::shared_ptr<model::GameSession> &game_session)
     {
         const size_t index = game_sessions_.size();
-        if (auto [it, inserted] = game_session_id_to_index_.emplace(game_session.GetId(), index); !inserted)
+        if (auto [it, inserted] = game_session_id_to_index_.emplace(game_session->GetId(), index); !inserted)
         {
-            throw std::invalid_argument("Game Session with id "s + *game_session.GetId() + " already exists"s);
+            throw std::invalid_argument("Game Session with id "s + *game_session->GetId() + " already exists"s);
         }
         else
         {
@@ -326,9 +326,9 @@ namespace model
     {
         for (auto &game_session : game_sessions_)
         {
-            game_session.LootGenerator(game_loots, time);
-            game_session.Tick(time);
-            game_session.FindCollision();
+            game_session->LootGenerator(game_loots, time);
+            game_session->Tick(time);
+            game_session->FindCollision();
         }
     }
 
@@ -338,11 +338,11 @@ namespace model
         delete dog_;
     }
 
-    void GameSession::SetPositionDog(Dog &&dog, const bool default_spawn)
+    void GameSession::SetPositionDog(std::shared_ptr<Dog> &dog, const bool default_spawn)
     {
         if (default_spawn)
         {
-            dog.SetPosition(0, 0);
+            dog->SetPosition(0, 0);
         }
         else
         {
@@ -351,19 +351,19 @@ namespace model
             auto x = GenerateNum(road.GetStart().x, road.GetEnd().x);
             auto y = GenerateNum(road.GetStart().y, road.GetEnd().y);
 
-            dog.SetPosition(x, y);
+            dog->SetPosition(x, y);
         }
     }
 
-    void GameSession::AddDog(Dog &&dog, const bool default_spawn)
+    void GameSession::AddDog(std::shared_ptr<Dog> &dog, const bool default_spawn)
     {
-        SetPositionDog(std::move(dog), default_spawn);
+        SetPositionDog(dog, default_spawn);
 
         const size_t index = dogs_.size();
-        if (auto [it, inserted] = dog_id_to_index_.emplace(dog.GetId(), index); !inserted)
+        if (auto [it, inserted] = dog_id_to_index_.emplace(dog->GetId(), index); !inserted)
         {
             delete &dog;
-            throw std::invalid_argument("Dog with id "s + *dog.GetId() + " already exists"s);
+            throw std::invalid_argument("Dog with id "s + *dog->GetId() + " already exists"s);
         }
         else
         {
@@ -379,11 +379,11 @@ namespace model
         }
     }
 
-    Dog *GameSession::FindDog(const Dog::Id &id) const noexcept
+    std::shared_ptr<Dog> GameSession::FindDog(const Dog::Id &id) const noexcept
     {
         if (auto it = dog_id_to_index_.find(id); it != dog_id_to_index_.end())
         {
-            return &const_cast<Dog &>(dogs_.at(it->second));
+            return dogs_.at(it->second);
         }
         return nullptr;
     }
@@ -392,7 +392,7 @@ namespace model
     {
         for (auto &dog_ : dogs_)
         {
-            dog_.Tick(time);
+            dog_->Tick(time);
         }
     }
 
@@ -401,14 +401,13 @@ namespace model
         auto current_map_loot = map_.GetLoots();
         auto all_loot = game_loots.GetLoot(map_.GetName());
 
-        for (size_t i = 0; i < map_.GetRoads().size(); ++i)
+       // for (size_t i = 0; i < map_.GetRoads().size(); ++i)        {
+        auto count_ = game_loots.GetGenerator()->Generate(delta, current_map_loot.size(), dogs_.size());
+        for (size_t i = 0; i < count_; ++i)
         {
-        // auto count_ = game_loots.GetGenerator()->Generate(delta, current_map_loot.size(), dogs_.size());
-        // for (size_t i = 0; i < count_; ++i)
-        // {
             auto roads = map_.GetRoads();
-         //   auto road = roads.at(GenerateNum(1, roads.size()));
-            auto road = roads.at(i);
+            auto road = roads.at(GenerateNum(1, roads.size()));
+         //   auto road = roads.at(i);
             auto x = GenerateNum(road.GetStart().x, road.GetEnd().x);
             auto y = GenerateNum(road.GetStart().y, road.GetEnd().y);
             auto type = GenerateNum(0, all_loot.size() - 1);
@@ -424,11 +423,20 @@ namespace model
 
         for (const auto &dog : dogs_)
         {
-            auto id_str = *dog.GetId();
-            auto curr_position_x = dog.GetPosition().x;
-            auto curr_position_y = dog.GetPosition().y;
-            auto end_position_x = (double)dog.GetRoad()->GetEnd().x;
-            auto end_position_y = (double)dog.GetRoad()->GetEnd().y;
+            std::string id_str = *dog->GetId();
+            double curr_position_x = dog->GetPosition().x;
+            double curr_position_y = dog->GetPosition().y;
+
+            double end_position_x = curr_position_x;
+            double end_position_y = curr_position_y;
+
+            auto road = dog->GetRoad();
+            if (road != nullptr)
+            {
+                end_position_x = static_cast<double>(road->GetEnd().x);
+                end_position_y = static_cast<double>(road->GetEnd().y);
+            }
+
             collision_detector::Gatherer gatherer{id_str, {curr_position_x, curr_position_y}, {end_position_x, end_position_y}, kDogWidth};
             provider.AddGatherer(gatherer);
         }
@@ -441,8 +449,8 @@ namespace model
 
         for (const auto &office : map_.GetOffices())
         {
-            auto curr_position_x = (double)office.GetPosition().x;
-            auto curr_position_y = (double)office.GetPosition().y;
+            auto curr_position_x = static_cast<double>(office.GetPosition().x);
+            auto curr_position_y = static_cast<double>(office.GetPosition().y);
             collision_detector::Item item{kOfficeID, {curr_position_x, curr_position_y}, 0.5};
             provider.AddItem(item);
         }
@@ -564,19 +572,19 @@ namespace model
         }
     }
 
-    GameSession *Game::FindGameSession(const GameSession::Id &id) const noexcept
+    std::shared_ptr<GameSession> Game::FindGameSession(const GameSession::Id &id) noexcept
     {
         if (auto it = game_session_id_to_index_.find(id); it != game_session_id_to_index_.end())
         {
-            return &const_cast<GameSession &>(game_sessions_.at(it->second));
+            return game_sessions_.at(it->second);
         }
         return nullptr;
     }
 
-    GameSession *Game::ConnectToSession(const std::string &map_id, const std::string &user_name)
+    std::shared_ptr<GameSession> Game::ConnectToSession(const std::string &map_id, const std::string &user_name)
     {
-        GameSession *game_session_ = nullptr;
-        Dog *dog_ = nullptr;
+        std::shared_ptr<GameSession> game_session_ = nullptr;
+        std::shared_ptr<Dog> dog_ = nullptr;
 
         if (game_sessions_.size() == 0)
         {
@@ -590,19 +598,19 @@ namespace model
             game_session_ = CreateNewSession(map_id);
         }
 
-        dog_ = new Dog(util::Tagged<std::string, Dog>(user_name), std::make_shared<Map>(game_session_->GetMap()));
+        dog_ = std::make_shared<Dog>(util::Tagged<std::string, Dog>(user_name), std::make_shared<Map>(game_session_->GetMap()));
 
         // TO DO. Remake
-        game_session_->AddDog(std::move(*dog_), IsDefaultSpawn());
+        game_session_->AddDog(dog_, IsDefaultSpawn());
 
         return game_session_;
     }
 
-    GameSession *Game::CreateNewSession(const std::string &map_id)
+    std::shared_ptr<model::GameSession> Game::CreateNewSession(const std::string &map_id)
     {
         const Map *data_map = FindMap(util::Tagged<std::string, Map>(map_id));
-        GameSession *game_session = new model::GameSession(util::Tagged<std::string, GameSession>(map_id), std::move(*data_map));
-        AddGameSession(std::move(*game_session));
+        auto game_session = std::make_shared<model::GameSession>(util::Tagged<std::string, GameSession>(map_id), std::move(*data_map));
+        AddGameSession(game_session);
 
         return game_session;
     }

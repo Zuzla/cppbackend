@@ -20,6 +20,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 add_library(MyLib STATIC 
+	src/constants.h
 	src/model.h
 	src/model.cpp
 	src/loot_generator.h
