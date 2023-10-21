@@ -1,10 +1,12 @@
 #include "json_loader.h"
 #include "loots.h"
+#include "constants.h"
 
 #include <fstream>
 
 namespace json_loader
 {
+    using namespace constant;
 
     void LoadBuildings(const boost::json::value &maps, model::Map &&new_map)
     {
@@ -70,14 +72,14 @@ namespace json_loader
 
         for (const auto &loot : loots.as_array())
         {
-            std::string name = json::value_to<std::string>(loot.at("name"));
-            std::string file = json::value_to<std::string>(loot.at("file"));
-            std::string type = json::value_to<std::string>(loot.at("type"));
+            std::string name = json::value_to<std::string>(loot.at(kName));
+            std::string file = json::value_to<std::string>(loot.at(kFile));
+            std::string type = json::value_to<std::string>(loot.at(kType));
 
             int32_t rotation = -1;
             try
             {
-                rotation = json::value_to<int32_t>(loot.at("rotation"));
+                rotation = json::value_to<int32_t>(loot.at(kRotation));
             }
             catch (...)
             {
@@ -86,15 +88,15 @@ namespace json_loader
             std::string color = "";
             try
             {
-                color = json::value_to<std::string>(loot.at("color"));
+                color = json::value_to<std::string>(loot.at(kColor));
             }
             catch (...)
             {
             }
 
-            double scale = json::value_to<double>(loot.at("scale"));
+            double scale = json::value_to<double>(loot.at(kScale));
 
-            int32_t value = json::value_to<int32_t>(loot.at("value"));
+            int32_t value = json::value_to<int32_t>(loot.at(kValue));
 
             add_data::Loot loot_{name, file, type, color, rotation, scale, value};
             game_loots_.AddLoot(map_name_, std::move(loot_));
@@ -120,12 +122,12 @@ namespace json_loader
 
         auto value = json::parse(data_file.str());
 
-        int default_dog_speed_ = json::value_to<int>(value.at("defaultDogSpeed"));
-        int default_bag_capacity_ = json::value_to<int>(value.at("defaultBagCapacity"));
+        int default_dog_speed_ = json::value_to<int>(value.at(kDefaultDogSpeed));
+        int default_bag_capacity_ = json::value_to<int>(value.at(kDefaultBagCapacity));
 
-        auto loot_generator_config = value.at("lootGeneratorConfig");
-        double period = json::value_to<double>(loot_generator_config.at("period"));
-        double probability = json::value_to<double>(loot_generator_config.at("probability"));
+        auto loot_generator_config = value.at(kLootGeneratorConfig);
+        double period = json::value_to<double>(loot_generator_config.at(kPeriod));
+        double probability = json::value_to<double>(loot_generator_config.at(kProbability));
         loot_gen::LootGenerator loot_generator_{std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::duration<double>(period)), probability};
 
         auto maps = value.at("maps");
@@ -145,9 +147,9 @@ namespace json_loader
 
             int map_bag_capacity_ = 0;
 
-            if (map.as_object().if_contains("bagCapacity"))
+            if (map.as_object().if_contains(kBagCapacity))
             {
-                map_bag_capacity_ = json::value_to<int>(map.at("bagCapacity"));
+                map_bag_capacity_ = json::value_to<int>(map.at(kBagCapacity));
             }
             else
             {

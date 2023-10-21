@@ -8,10 +8,9 @@
 
 #include "loot_generator.h"
 
-using namespace std::literals;
-
 namespace add_data
 {
+    using namespace std::literals;
     struct Loot
     {
     public:
@@ -35,15 +34,15 @@ namespace add_data
         GameLoots() = default;
 
         std::vector<Loot> GetLoot(const std::string &map_name);
-        void AddLoot(const std::string &map_name, Loot&& new_loot);
+        void AddLoot(const std::string &map_name, Loot &&new_loot);
 
-        void MakeGenerator(loot_gen::LootGenerator& gen)
+        void MakeGenerator(loot_gen::LootGenerator &gen)
         {
             if (generator == nullptr)
                 generator = std::make_shared<loot_gen::LootGenerator>(gen);
         }
 
-        std::shared_ptr<loot_gen::LootGenerator>& GetGenerator() noexcept
+        std::shared_ptr<loot_gen::LootGenerator> &GetGenerator() noexcept
         {
             return generator;
         }
