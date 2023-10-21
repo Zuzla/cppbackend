@@ -373,22 +373,6 @@ namespace model
             return (speed_.x == 0 && speed_.y == 0 && inaction_);
         }
 
-        void UpdateInactionTime(std::chrono::milliseconds time)
-        {
-            if (inaction_)
-            {
-                afk_time_ += time.count();
-            }
-        }
-
-        void SetInaction(bool value)
-        {
-            inaction_ = value;
-
-            if (inaction_ == false)
-                afk_time_ = 0;
-        }
-
         int64_t GetRetirementTime() const noexcept
         {
             return afk_time_;
@@ -403,6 +387,10 @@ namespace model
         {
             return play_time_;
         }
+
+        void UpdateInactionTime(std::chrono::milliseconds time);
+
+        void SetInaction(bool value);
 
     private:
         Id id_;

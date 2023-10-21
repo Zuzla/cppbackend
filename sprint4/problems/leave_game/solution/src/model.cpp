@@ -10,6 +10,22 @@ namespace model
 
     using namespace std::literals;
 
+void Dog::UpdateInactionTime(std::chrono::milliseconds time)
+        {
+            if (inaction_)
+            {
+                afk_time_ += time.count();
+            }
+        }
+
+        void Dog::SetInaction(bool value)
+        {
+            inaction_ = value;
+
+            if (inaction_ == false)
+                afk_time_ = 0;
+        }
+
     void Dog::SetPosition(const double &x, const double &y)
     {
         position_.x = x;
@@ -382,7 +398,6 @@ namespace model
         const size_t index = dogs_.size();
         if (auto [it, inserted] = dog_id_to_index_.emplace(dog->GetId(), index); !inserted)
         {
-            //delete &dog;
             throw std::invalid_argument("Dog with id "s + *dog->GetId() + " already exists"s);
         }
         else
@@ -420,7 +435,7 @@ namespace model
 
                 if (map_.GetRetirementTime() < dog_->GetRetirementTime())
                 {
-                    database::PlayerRecord record(*dog_->GetId(), dog_->GetScore(), dog_->GetPlayTime());
+                    database::PlayerRecord record(*dog_->GetId(), dog_->GetScore(), (dog_->GetPlayTime() - dog_->GetRetirementTime()));
                     player_rep_.SavePlayerRecord(record);
                 }
             }

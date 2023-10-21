@@ -20,10 +20,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 add_library(MyLib STATIC 
-	src/model.h
 	src/constants.h
+	src/model.h
 	src/model.cpp
 	src/database.h
+	src/database.cpp
 	src/application.h
 	src/application.cpp
 	src/serialization.h

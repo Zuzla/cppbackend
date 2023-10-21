@@ -13,8 +13,8 @@ namespace database
     using namespace std::literals;
     using pqxx::operator"" _zv;
 
-    const std::string DB_URL = "postgres://postgres:root@localhost:5432/game_db";
-    // const std::string DB_URL = "GAME_DB_URL";
+    // const std::string DB_URL = "postgres://postgres:root@localhost:5432/game_db";
+    const std::string DB_URL = "GAME_DB_URL";
     const size_t DEFAULT_OFFSET = 0;
     const size_t DEFAULT_LIMIT = 100;
 
@@ -77,30 +77,10 @@ namespace database
             }
         }
 
-        ConnectionWrapper GetConnection()
-        {
-            std::unique_lock lock{mutex_};
-            // Блокируем текущий поток и ждём, пока cond_var_ не получит уведомление и
-            // не освободится хотя бы одно соединение
-            cond_var_.wait(lock, [this]
-                           { return used_connections_ < pool_.size(); });
-            // После выхода из цикла ожидания мьютекс остаётся захваченным
-
-            return {std::move(pool_[used_connections_++]), *this};
-        }
+        ConnectionWrapper GetConnection();
 
     private:
-        void ReturnConnection(ConnectionPtr &&conn)
-        {
-            // Возвращаем соединение обратно в пул
-            {
-                std::lock_guard lock{mutex_};
-                assert(used_connections_ != 0);
-                pool_[--used_connections_] = std::move(conn);
-            }
-            // Уведомляем один из ожидающих потоков об изменении состояния пула
-            cond_var_.notify_one();
-        }
+        void ReturnConnection(ConnectionPtr &&conn);
 
         std::mutex mutex_;
         std::condition_variable cond_var_;
@@ -132,51 +112,11 @@ namespace database
         explicit PlayerRecordRepository(std::shared_ptr<ConnectionPool> &connection_pool)
             : connection_pool_(connection_pool){};
 
-        void SavePlayerRecordsTable(const std::vector<PlayerRecord> &player_records)
-        {
-            auto conn = connection_pool_->GetConnection();
-            pqxx::work work_{*conn};
-            for (const auto &player_record : player_records)
-            {
-                work_.exec_params(R"(
-            INSERT INTO hall_of_fame (name, score, play_time) VALUES ($1, $2, $3);
-            )"_zv,
-                                  player_record.GetName(), player_record.GetScore(),
-                                  player_record.GetPlayTime());
-            }
-            work_.commit();
-        }
+        void SavePlayerRecordsTable(const std::vector<PlayerRecord> &player_records);
 
-        void SavePlayerRecord(PlayerRecord &player_record)
-        {
-            auto conn = connection_pool_->GetConnection();
-            pqxx::work work_{*conn};
+        void SavePlayerRecord(PlayerRecord &player_record);
 
-            work_.exec_params(R"(
-            INSERT INTO hall_of_fame (name, score, play_time) VALUES ($1, $2, $3);
-            )"_zv,
-                              player_record.GetName(), player_record.GetScore(),
-                              player_record.GetPlayTime());
-
-            work_.commit();
-        }
-
-        std::vector<PlayerRecord> GetRecordsTable(size_t offset, size_t limit)
-        {
-            auto conn = connection_pool_->GetConnection();
-            std::vector<PlayerRecord> records_table;
-            pqxx::read_transaction read_transaction_{*conn};
-            auto query_text = "SELECT name, score, play_time FROM hall_of_fame ORDER "
-                              "BY score DESC, play_time ASC, name ASC LIMIT " +
-                              std::to_string(limit) + " OFFSET " +
-                              std::to_string(offset) + ";";
-            for (auto [name, score, play_time] :
-                 read_transaction_.query<std::string, size_t, int64_t>(query_text))
-            {
-                records_table.emplace_back(name, score, play_time);
-            }
-            return records_table;
-        }
+        std::vector<PlayerRecord> GetRecordsTable(size_t offset, size_t limit);
 
     private:
         std::shared_ptr<ConnectionPool> &connection_pool_;
