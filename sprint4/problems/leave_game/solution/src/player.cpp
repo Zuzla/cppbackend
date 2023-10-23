@@ -44,16 +44,9 @@ namespace app
 
     void Players::AddPlayer(std::shared_ptr<app::Player> player)
     {
-        try
-        {
-            auto token = player->GetToken();
-            auto pair = std::make_pair<Token, std::shared_ptr<Player>>(std::move(token), std::move(player));
-            players_.insert(pair);
-        }
-        catch (...)
-        {
-            // DeletePlayer(std::move(player));
-        }
+        auto token = player->GetToken();
+        auto pair = std::make_pair<Token, std::shared_ptr<Player>>(std::move(token), std::move(player));
+        players_.insert(pair);
     }
 
     std::shared_ptr<Player> Players::FindByToken(std::string &str) const

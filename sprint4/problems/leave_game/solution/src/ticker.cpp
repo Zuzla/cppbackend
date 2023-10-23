@@ -11,7 +11,6 @@ namespace app
     }
 
     void Ticker::ScheduleTick() {
-        //assert(strand_.running_in_this_thread());
         timer_.expires_after(period_);
         timer_.async_wait([self = shared_from_this()](sys::error_code ec) {
             self->OnTick(ec);
@@ -20,7 +19,6 @@ namespace app
 
     void Ticker::OnTick(sys::error_code ec) {
         using namespace std::chrono;
-        //assert(strand_.running_in_this_thread());
 
         if (!ec) {
             auto this_tick = Clock::now();

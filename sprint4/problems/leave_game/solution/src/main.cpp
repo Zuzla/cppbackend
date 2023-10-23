@@ -241,4 +241,6 @@ int main(int argc, const char *argv[])
             << "server exited"sv;
         return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }

@@ -371,7 +371,6 @@ void Dog::UpdateInactionTime(std::chrono::milliseconds time)
         if (default_spawn)
         {
             dog->SetPosition(0, 0);
-            // TO DO. remake
             dog->UpdateRoad(map_.GetRoads().at(0));
         }
         else
@@ -449,11 +448,7 @@ void Dog::UpdateInactionTime(std::chrono::milliseconds time)
 
         for (size_t i = 0; i < map_.GetRoads().size(); ++i)
         {
-            // auto count_ = game_loots.GetGenerator()->Generate(delta, current_map_loot.size(), dogs_.size());
-            // for (size_t i = 0; i < count_; ++i)
-            // {
             auto roads = map_.GetRoads();
-            //   auto road = roads.at(GenerateNum(1, roads.size()));
             auto road = roads.at(i);
             auto x = GenerateNum(road.GetStart().x, road.GetEnd().x);
             auto y = GenerateNum(road.GetStart().y, road.GetEnd().y);
@@ -613,7 +608,6 @@ void Dog::UpdateInactionTime(std::chrono::milliseconds time)
         }
         catch (...)
         {
-            // Удаляем офис из вектора, если не удалось вставить в unordered_map
             offices_.pop_back();
             throw;
         }

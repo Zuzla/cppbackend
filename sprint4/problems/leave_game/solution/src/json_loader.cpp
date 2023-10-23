@@ -77,22 +77,24 @@ namespace json_loader
             std::string file = json::value_to<std::string>(loot.at(kFile));
             std::string type = json::value_to<std::string>(loot.at(kType));
 
-            int32_t rotation = -1;
+            int32_t rotation;
             try
             {
                 rotation = json::value_to<int32_t>(loot.at(kRotation));
             }
-            catch (...)
+            catch (std::exception& ex)
             {
+                rotation = -1;
             }
 
-            std::string color = "";
+            std::string color;
             try
             {
                 color = json::value_to<std::string>(loot.at(kColor));
             }
-            catch (...)
+            catch (std::exception& ex)
             {
+                color = "";
             }
 
             double scale = json::value_to<double>(loot.at(kScale));

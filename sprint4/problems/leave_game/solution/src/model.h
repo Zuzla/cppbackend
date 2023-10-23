@@ -24,7 +24,6 @@ namespace model
     const int32_t kRoadWidth = 0.4;
     const int32_t kItemWidth = 0.0;
     const int32_t kDogWidth = 0.6;
-    // НУжно переделать
     const int32_t kOfficeID = -999;
 
     const std::string kLeftDirection = "L";

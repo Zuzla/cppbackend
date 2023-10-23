@@ -13,8 +13,8 @@ namespace database
     using namespace std::literals;
     using pqxx::operator"" _zv;
 
-    // const std::string DB_URL = "postgres://postgres:root@localhost:5432/game_db";
-    const std::string DB_URL = "GAME_DB_URL";
+     const std::string DB_URL = "postgres://postgres:root@localhost:5432/game_db";
+    //const std::string DB_URL = "GAME_DB_URL";
     const size_t DEFAULT_OFFSET = 0;
     const size_t DEFAULT_LIMIT = 100;
 
